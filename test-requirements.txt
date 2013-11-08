@@ -1,0 +1,9 @@
+coverage
+discover
+httplib2
+mock
+mox
+fixtures>=0.3.12
+python-subunit
+testrepository>=0.0.13
+testtools>=0.9.29
