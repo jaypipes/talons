@@ -14,21 +14,23 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import mock
 
-class Identifies(object):
-    
-    """
-    Base class for plugins that act to identify the requesting user,
-    possibly by inspecting headers in the incoming HTTP request or
-    looking in the wsgi.environ.
-    """
+from talons.auth.identify import basicauth
 
-    IDENTITY_ENV_KEY = 'wsgi.identity'
+from tests import base
 
-    def identify(self, request, response, params):
-        """
-        Looks and stores identity information in the request environ's
-        'wsgi.identity' key. If not identity information is found, this
-        key shall be set to None.
-        """
-        raise NotImplementedError
+
+class TestBasicAuth(base.TestCase):
+
+    def test_non_basic_auth(self):
+        req = mock.MagicMock()
+        a_prop = mock.PropertyMock(return_value="notbasic xxx")
+        type(req).auth = a_prop
+        e_prop = mock.PropertyMock(return_value=dict())
+        type(req).env = e_prop
+
+        i = basicauth.BasicAuthIdentifier()
+        i.identify(req)
+        e_prop.assert_called_once_with()
+        a_prop.assert_called_once_with()
