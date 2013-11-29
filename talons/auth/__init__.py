@@ -59,4 +59,4 @@ class Identifies(object):
         'wsgi.identity' key. If no identity information is found, this
         key shall be set to None.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: NO COVER

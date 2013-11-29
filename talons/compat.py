@@ -37,18 +37,3 @@ else:  # pragma NO COVER Python < 3.0
     encodebytes = base64.encodestring
     decodestring = base64.decodestring
     encodestring = base64.encodestring
-
-
-def must_decode(value):
-    if type(value) is six.b:
-        try:
-            return value.decode('utf-8')
-        except UnicodeDecodeError:
-            return value.decode('latin1')
-    return value
-
-
-def must_encode(value):
-    if type(value) is six.u:
-        return value.encode('utf-8')
-    return value

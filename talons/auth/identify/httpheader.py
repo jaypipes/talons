@@ -77,6 +77,7 @@ class Identifier(auth.Identifies):
                            "identify_httpheader configuration. "
                            "Stripping.").format(attr)
                     LOG.warn(msg)
+                    continue
                 self.attr_headers[attr] = v
 
     def identify(self, request):
