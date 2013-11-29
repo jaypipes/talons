@@ -20,7 +20,6 @@
 
 import base64
 
-import six
 
 if 'decodebytes' in base64.__dict__:  # pragma NO COVER Python >= 3.0
     decodebytes = base64.decodebytes
