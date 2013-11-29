@@ -17,33 +17,42 @@
 import binascii
 import logging
 
-import falcon
 import six
 
+from talons import auth
 from talons import compat
-from talons.auth import base
 
 LOG = logging.getLogger(__name__)
 
 
-class BasicAuthIdentity(base.Identifies):
+class Identifier(auth.Identifies):
 
-    def identify(self, request, response, params):
-        """
-        Looks in HTTP Basic Auth headers and stores identity information
-        in the request environ's 'wsgi.identity' key. If no identity information
-        is found, sets this key to None.
-        """
+    """
+    Looks in HTTP Basic Access authentication headers and stores identity
+    in the request environ's 'wsgi.identity' key. If no identity information
+    is found, sets this key to None.
+
+    Basic access authentication uses a client-sent HTTP "Authorize" header,
+    with the string "Basic" and a base-64-encoded username:password string.
+
+    :see http://en.wikipedia.org/wiki/Basic_access_authentication
+    """
+
+    def identify(self, request):
         if request.env.get(self.IDENTITY_ENV_KEY) is not None:
             return None
 
         http_auth = request.auth
 
-        if isinstance(authorization, six.string_types):
+        if isinstance(http_auth, six.string_types):
             http_auth = http_auth.encode('ascii')
         try:
             auth_type, user_and_key = http_auth.split(six.b(' '), 1)
-        except ValueError:
+        except ValueError as err:
+            msg = ("Basic authorize header value not properly formed. "
+                   "Supplied header {0}. Got error: {1}")
+            msg = msg.format(http_auth, str(err))
+            LOG.debug(msg)
             return None
 
         if auth_type.lower() == six.b('basic'):
@@ -53,10 +62,9 @@ class BasicAuthIdentity(base.Identifies):
                 user_id, key = user_and_key.split(six.b(':'), 1)
                 user_id = compat.must_decode(user_id)
                 key = compat.must_decode(key)
-            except (binascii.Error, ValueError), err:
+                identity = auth.Identity(user_id, key=key)
+                request.env[self.IDENTITY_ENV_KEY] = identity
+            except (binascii.Error, ValueError) as err:
                 msg = ("Unable to determine user and pass/key encoding. "
                        "Got error: {0}").format(str(err))
                 LOG.debug(msg)
-                return None
-
-            request.env[self.IDENTITY_ENV_KEY] = dict(user_id=user_id, key=key)

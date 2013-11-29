@@ -14,21 +14,18 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
 
-class Identifies(object):
-    
+import fixtures
+import testtools
+
+
+class TestCase(testtools.TestCase):
+
     """
-    Base class for plugins that act to identify the requesting user,
-    possibly by inspecting headers in the incoming HTTP request or
-    looking in the wsgi.environ.
+    Simple base test case class for unit tests.
     """
 
-    IDENTITY_ENV_KEY = 'wsgi.identity'
-
-    def identify(self, request, response, params):
-        """
-        Looks and stores identity information in the request environ's
-        'wsgi.identity' key. If not identity information is found, this
-        key shall be set to None.
-        """
-        raise NotImplementedError
+    def setUp(self):
+        self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
+        super(TestCase, self).setUp()
