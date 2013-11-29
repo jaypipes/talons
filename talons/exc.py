@@ -14,18 +14,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import logging
 
-import fixtures
-import testtools
-
-
-class TestCase(testtools.TestCase):
+class BadConfiguration(Exception):
 
     """
-    Simple base test case class for unit tests.
+    Raised by constructors of `talons.auth.Identifies` or
+    `talons.auth.Authenticates` concrete class implementations if supplied
+    configuration options either conflict or are not valid.
     """
-
-    def setUp(self):
-        self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
-        super(TestCase, self).setUp()

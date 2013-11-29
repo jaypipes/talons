@@ -19,13 +19,13 @@ import logging
 
 import six
 
-from talons import compat
 from talons import auth
+from talons import compat
 
 LOG = logging.getLogger(__name__)
 
 
-class BasicAuthIdentifier(auth.Identifies):
+class Identifier(auth.Identifies):
 
     """
     Looks in HTTP Basic Access authentication headers and stores identity
@@ -50,7 +50,8 @@ class BasicAuthIdentifier(auth.Identifies):
             auth_type, user_and_key = http_auth.split(six.b(' '), 1)
         except ValueError as err:
             msg = ("Basic authorize header value not properly formed. "
-                   "Got error: {0}").format(str(err))
+                   "Supplied header {0}. Got error: {1}")
+            msg = msg.format(http_auth, str(err))
             LOG.debug(msg)
             return None
 
@@ -61,11 +62,9 @@ class BasicAuthIdentifier(auth.Identifies):
                 user_id, key = user_and_key.split(six.b(':'), 1)
                 user_id = compat.must_decode(user_id)
                 key = compat.must_decode(key)
+                identity = auth.Identity(user_id, key=key)
+                request.env[self.IDENTITY_ENV_KEY] = identity
             except (binascii.Error, ValueError) as err:
                 msg = ("Unable to determine user and pass/key encoding. "
                        "Got error: {0}").format(str(err))
                 LOG.debug(msg)
-                return None
-
-            identity = auth.Identity(user_id, key=key)
-            request.env[self.IDENTITY_ENV_KEY] = identity

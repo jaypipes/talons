@@ -23,7 +23,7 @@ class Identity(object):
     membership).
     """
 
-    def __init__(self, login, key=None, roles=None, groups=None):
+    def __init__(self, login, key=None, roles=[], groups=[]):
         self.login = login
         self.key = key
         self.groups = set(groups)
@@ -39,6 +39,19 @@ class Identifies(object):
     """
 
     IDENTITY_ENV_KEY = 'wsgi.identity'
+
+    def __init__(self, **conf):
+        """
+        Construct a concrete object with a set of keyword configuration
+        options.
+
+        :param **conf: Free-form keyword arguments. Concrete
+                       implementations should document the keyword arguments
+                       that the plugin cares about.
+        :raises `talons.exc.BadConfiguration` if configuration options
+                are not valid or conflict with each other.
+        """
+        pass
 
     def identify(self, request):
         """

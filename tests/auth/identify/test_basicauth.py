@@ -30,7 +30,37 @@ class TestBasicAuth(base.TestCase):
         e_prop = mock.PropertyMock(return_value=dict())
         type(req).env = e_prop
 
-        i = basicauth.BasicAuthIdentifier()
+        i = basicauth.Identifier()
         i.identify(req)
         e_prop.assert_called_once_with()
         a_prop.assert_called_once_with()
+
+    def test_basic_invalid(self):
+        req = mock.MagicMock()
+        a_prop = mock.PropertyMock(return_value="basic xxx")
+        type(req).auth = a_prop
+        e_prop = mock.PropertyMock(return_value=dict())
+        type(req).env = e_prop
+
+        mod_cls = 'talons.auth.identify.basicauth.auth.Identity'
+        with mock.patch(mod_cls) as i_mock:
+            i = basicauth.Identifier()
+            i.identify(req)
+            e_prop.assert_called_once_with()
+            a_prop.assert_called_once_with()
+            i_mock.assert_not_called()
+
+    def test_basic_valid(self):
+        req = mock.MagicMock()
+        # Aladdin with key 'open sesame'
+        valid_auth = "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
+        a_prop = mock.PropertyMock(return_value=valid_auth)
+        type(req).auth = a_prop
+        e_prop = mock.PropertyMock(return_value=dict())
+        type(req).env = e_prop
+
+        mod_cls = 'talons.auth.identify.basicauth.auth.Identity'
+        with mock.patch(mod_cls) as i_mock:
+            i = basicauth.Identifier()
+            i.identify(req)
+            i_mock.assert_called_once_with('Aladdin', key='open sesame')
