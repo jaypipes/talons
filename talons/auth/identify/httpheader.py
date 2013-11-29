@@ -49,14 +49,14 @@ class Identifier(auth.Identifies):
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
         """
-        self.user_header = conf.pop('identify_httpheader_user')
+        self.user_header = conf.pop('identify_httpheader_user', None)
         if not self.user_header:
             msg = ("Missing required identify_httpheader_user configuration "
                    "option.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
 
-        self.key_header = conf.pop('identify_httpheader_key')
+        self.key_header = conf.pop('identify_httpheader_key', None)
         if not self.key_header:
             msg = ("Missing required identify_httpheader_key configuration "
                    "option.")
