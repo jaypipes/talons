@@ -56,8 +56,8 @@ from talons.auth.authenticate import ldap
 config = getappconfig()
 
 auth_middleware = auth.create_middleware(identify_with=[
-                                            basicauth.Identifer,
-                                            httpheader.Identifer],
+                                            basicauth.Identifier,
+                                            httpheader.Identifier],
                                          authenticate_with=ldap.Authenticator,
                                          **config)
 

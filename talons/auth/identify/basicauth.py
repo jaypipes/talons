@@ -40,7 +40,7 @@ class Identifier(auth.Identifies):
 
     def identify(self, request):
         if request.env.get(self.IDENTITY_ENV_KEY) is not None:
-            return None
+            return True
 
         http_auth = request.auth
 
@@ -53,7 +53,7 @@ class Identifier(auth.Identifies):
                    "Supplied header {0}. Got error: {1}")
             msg = msg.format(http_auth, str(err))
             LOG.debug(msg)
-            return None
+            return False
 
         if auth_type.lower() == six.b('basic'):
             try:
@@ -62,7 +62,9 @@ class Identifier(auth.Identifies):
                 user_id, key = user_and_key.split(six.b(':'), 1)
                 identity = auth.Identity(user_id, key=key)
                 request.env[self.IDENTITY_ENV_KEY] = identity
+                return True
             except (binascii.Error, ValueError) as err:
                 msg = ("Unable to determine user and pass/key encoding. "
                        "Got error: {0}").format(str(err))
                 LOG.debug(msg)
+        return False

@@ -82,14 +82,15 @@ class Identifier(auth.Identifies):
 
     def identify(self, request):
         if request.env.get(self.IDENTITY_ENV_KEY) is not None:
-            return None
+            return True
 
         user_id = request.get_header(self.user_header)
         key = request.get_header(self.key_header)
         if not user_id or not key:
-            return None
+            return False
 
         identity = auth.Identity(user_id, key=key)
         for attr, header in self.attr_headers.items():
             setattr(identity, attr, request.get_header(header))
         request.env[self.IDENTITY_ENV_KEY] = identity
+        return True
