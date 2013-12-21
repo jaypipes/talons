@@ -38,13 +38,13 @@ class Identifier(auth.Identifies):
         :param **conf:
 
             identify_httpheader_user: HTTP header to look for user/login
-                                       name (required)
+                                      name (required)
             identify_httpheader_key: HTTP header to look for password/key
-                                      (required)
+                                     (required)
             identify_httpheader_$ATTRIBUTE: HTTP header that, if found, will
-                                             be used to add $ATTRIBUTE to the
-                                             Identity object stored in the WSGI
-                                             pipeline. (optional)
+                                            be used to add $ATTRIBUTE to the
+                                            Identity object stored in the WSGI
+                                            pipeline. (optional)
 
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.

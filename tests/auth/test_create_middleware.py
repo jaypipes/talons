@@ -80,7 +80,7 @@ class TestMiddleware(base.TestCase):
 
         i.identify.return_value = True
         a.authenticate.return_value = True
-        
+
         m = auth.Middleware([i], [a], delay_401=True)
         self.assertEquals(None, m(req, None, None))
 
