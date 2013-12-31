@@ -60,7 +60,8 @@ class Identifier(auth.Identifies):
                 user_and_key = user_and_key.strip()
                 user_and_key = compat.decodebytes(user_and_key)
                 user_id, key = user_and_key.split(six.b(':'), 1)
-                identity = auth.Identity(user_id, key=key)
+                identity = auth.Identity(compat.b2u(user_id),
+                                         key=compat.b2u(key))
                 request.env[self.IDENTITY_ENV_KEY] = identity
                 return True
             except (binascii.Error, ValueError) as err:
