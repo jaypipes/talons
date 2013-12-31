@@ -85,7 +85,7 @@ class TestBasicAuth(base.TestCase):
         with mock.patch(mod_cls) as i_mock:
             i = basicauth.Identifier()
             i.identify(req)
-            i_mock.assert_called_once_with('Aladdin', key='open sesame')
+            i_mock.assert_called_once_with(u'Aladdin', key=u'open sesame')
 
     def test_basic_bytes(self):
         req = mock.MagicMock()
@@ -100,4 +100,4 @@ class TestBasicAuth(base.TestCase):
         with mock.patch(mod_cls) as i_mock:
             i = basicauth.Identifier()
             i.identify(req)
-            i_mock.assert_called_once_with('Aladdin', key='open sesame')
+            i_mock.assert_called_once_with(u'Aladdin', key=u'open sesame')
