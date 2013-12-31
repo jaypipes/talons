@@ -66,3 +66,12 @@ identities, we'd supply the following configuration options to the
 `talons.auth.authenticate.external.Authenticator` constructor:
 
  * `authenticate_external_authfn=application.auth.authenticate`
+
+`talons.auth.authenticate.htpasswd.Authenticator`
+=================================================
+
+An Authenticator plugin that queries an Apache htpasswd file to check
+the credentials of a request. The plugin has a single configuration option:
+
+ * `authenticate_htpasswd_path`: The filepath to the Apache htpasswd file to
+   use for authentication checks.

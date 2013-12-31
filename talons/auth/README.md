@@ -49,7 +49,7 @@ desired `talons.auth` middleware and supply it to the `falcon.API()` call:
 import falcon
 from talons import auth
 from talons.auth.identify import basicauth, httpheader
-from talons.auth.authenticate import ldap
+from talons.auth.authenticate import htpasswd
 
 # Assume getappconfig() returns a dictionary of application configuration
 # options that may be read from some INI file...
@@ -58,7 +58,7 @@ config = getappconfig()
 auth_middleware = auth.create_middleware(identify_with=[
                                             basicauth.Identifier,
                                             httpheader.Identifier],
-                                         authenticate_with=ldap.Authenticator,
+                                         authenticate_with=htpasswd.Authenticator,
                                          **config)
 
 app = falcon.API(before=[auth_middleware])
