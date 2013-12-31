@@ -1,7 +1,5 @@
-What is Talons?
-===============
-
-Talons == [Falcon](http://github.com/racker/falcon) hooks.
+Talons == Falcon Hooks [![Build Status](https://travis-ci.org/talons/talons.png)](https://travis-ci.org/talons/talons)
+======================
 
 Talons is a library of WSGI middleware that is designed to work with
 the [Falcon](http://github.com/racker/falcon) lightweight Python framework
