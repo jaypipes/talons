@@ -20,6 +20,7 @@
 
 import base64
 
+import six
 
 if 'decodebytes' in base64.__dict__:  # pragma NO COVER Python >= 3.0
     decodebytes = base64.decodebytes
@@ -36,3 +37,12 @@ else:  # pragma NO COVER Python < 3.0
     encodebytes = base64.encodestring
     decodestring = base64.decodestring
     encodestring = base64.encodestring
+
+
+def b2u(subject):
+    if type(subject) is six.b:
+        try:
+            return subject.decode('utf-8')
+        except UnicodeDecodeError:
+            return subject.decode('latin-1')
+    return subject

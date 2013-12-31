@@ -42,8 +42,10 @@ class TestHttpHeader(base.TestCase):
         i = httpheader.Identifier(**conf)
         self.assertEquals('x-user', i.user_header)
         self.assertEquals('x-key', i.key_header)
-        self.assertEquals(['tenant'], i.attr_headers.keys())
-        self.assertEquals(['x-tenant'], i.attr_headers.values())
+        # list() below is because Python 3.3 dict.keys() returns
+        # an iterable view, not a list.
+        self.assertEquals(['tenant'], list(i.attr_headers.keys()))
+        self.assertEquals(['x-tenant'], list(i.attr_headers.values()))
 
     def test_blacklisted_attrs(self):
         conf = dict(identify_httpheader_user='x-user',
