@@ -7,7 +7,9 @@ class implements a single method, `identify()`, that takes the
 incoming `falcon.request.Request` object as its sole parameter. If the
 identity of the authenticating user can be determined, then the Identifier
 object stores a `talons.auth.Identity` object in the WSGI environ's
-`wsgi.identity` key. Multiple Identifier classes can be supplied to the
+`wsgi.identity` key and returns True.
+
+Multiple Identifier classes can be supplied to the
 `talons.auth.create_middleware` method to support a variety of ways of
 gleaning identity information from the WSGI request. Each Identifier's
 `identify()` method checks to see if the `wsgi.identity` key is already

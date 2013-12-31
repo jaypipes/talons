@@ -87,10 +87,10 @@ class Authenticates(object):
         """
         pass
 
-    def authenticate(self, request):
+    def authenticate(self, identity):
         """
-        Looks at the stored identity information and returns True if the
-        stored credentials can be verified, False otherwise.
+        Looks at the supplied identity object and returns True if the
+        credentials can be verified, False otherwise.
         """
         raise NotImplementedError  # pragma: NO COVER
 
@@ -146,9 +146,10 @@ class Middleware(object):
                 return
             self.raise_401_no_identity()
 
+        identity = request.env['wsgi.identity']
         authenticated = False
         for a in self.authenticators:
-            if a.authenticate(request):
+            if a.authenticate(identity):
                 authenticated = True
                 break
 
