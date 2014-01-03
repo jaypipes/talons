@@ -18,7 +18,7 @@ import mock
 import testtools
 
 from talons import exc
-from talons.auth.authenticate import htpasswd
+from talons.auth import htpasswd
 
 from tests import base
 
@@ -34,14 +34,14 @@ class TestExternal(base.TestCase):
         with mock.patch('os.path.exists') as mocked:
             mocked.return_value = False
             with testtools.ExpectedException(exc.BadConfiguration):
-                conf = dict(authenticate_htpasswd_path='this.not.exist')
+                conf = dict(htpasswd_path='this.not.exist')
                 htpasswd.Authenticator(**conf)
 
     def test_authfn_called(self):
         with mock.patch('os.path.exists') as ope_mock:
             ope_mock.return_value = True
             with mock.patch('passlib.apache.HtpasswdFile') as htf_mock:
-                conf = dict(authenticate_htpasswd_path='foo')
+                conf = dict(htpasswd_path='foo')
                 auth = htpasswd.Authenticator(**conf)
                 id_mock = mock.MagicMock()
                 id_mock.login = 'foo'

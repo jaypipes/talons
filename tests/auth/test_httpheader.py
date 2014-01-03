@@ -18,7 +18,7 @@ import mock
 import testtools
 
 from talons import exc
-from talons.auth.identify import httpheader
+from talons.auth import httpheader
 
 from tests import base
 
@@ -32,13 +32,13 @@ class TestHttpHeader(base.TestCase):
 
     def test_missing_key_header(self):
         with testtools.ExpectedException(exc.BadConfiguration):
-            conf = dict(identify_httpheader_user='x-user')
+            conf = dict(httpheader_user='x-user')
             httpheader.Identifier(**conf)
 
     def test_good_constructor(self):
-        conf = dict(identify_httpheader_user='x-user',
-                    identify_httpheader_key='x-key',
-                    identify_httpheader_tenant='x-tenant')
+        conf = dict(httpheader_user='x-user',
+                    httpheader_key='x-key',
+                    httpheader_tenant='x-tenant')
         i = httpheader.Identifier(**conf)
         self.assertEquals('x-user', i.user_header)
         self.assertEquals('x-key', i.key_header)
@@ -48,9 +48,9 @@ class TestHttpHeader(base.TestCase):
         self.assertEquals(['x-tenant'], list(i.attr_headers.values()))
 
     def test_blacklisted_attrs(self):
-        conf = dict(identify_httpheader_user='x-user',
-                    identify_httpheader_key='x-key',
-                    identify_httpheader___mro__='BADDIE')
+        conf = dict(httpheader_user='x-user',
+                    httpheader_key='x-key',
+                    httpheader___mro__='BADDIE')
         i = httpheader.Identifier(**conf)
         self.assertEquals('x-user', i.user_header)
         self.assertEquals('x-key', i.key_header)
@@ -65,9 +65,9 @@ class TestHttpHeader(base.TestCase):
         gh_mock.side_effect = [None, None]
         req.get_header = gh_mock
 
-        conf = dict(identify_httpheader_user='x-user',
-                    identify_httpheader_key='x-key',
-                    identify_httpheader_tenant='x-tenant')
+        conf = dict(httpheader_user='x-user',
+                    httpheader_key='x-key',
+                    httpheader_tenant='x-tenant')
         i = httpheader.Identifier(**conf)
         i.identify(req)
         req.env.get.assert_called_once_with('wsgi.identity')
@@ -80,8 +80,8 @@ class TestHttpHeader(base.TestCase):
         req.env.get = mock.MagicMock()
         req.env.get.side_effect = ['something']
 
-        conf = dict(identify_httpheader_user='x-user',
-                    identify_httpheader_key='x-key')
+        conf = dict(httpheader_user='x-user',
+                    httpheader_key='x-key')
         i = httpheader.Identifier(**conf)
         i.identify(req)
         req.env.get.assert_called_once_with('wsgi.identity')
@@ -95,9 +95,9 @@ class TestHttpHeader(base.TestCase):
         gh_mock.side_effect = ['Aladdin', None]
         req.get_header = gh_mock
 
-        conf = dict(identify_httpheader_user='x-user',
-                    identify_httpheader_key='x-key',
-                    identify_httpheader_tenant='x-tenant')
+        conf = dict(httpheader_user='x-user',
+                    httpheader_key='x-key',
+                    httpheader_tenant='x-tenant')
         i = httpheader.Identifier(**conf)
         i.identify(req)
         req.env.get.assert_called_once_with('wsgi.identity')
@@ -113,8 +113,8 @@ class TestHttpHeader(base.TestCase):
         gh_mock.side_effect = ['Aladdin', 'open sesame']
         req.get_header = gh_mock
 
-        conf = dict(identify_httpheader_user='x-user',
-                    identify_httpheader_key='x-key')
+        conf = dict(httpheader_user='x-user',
+                    httpheader_key='x-key')
         i = httpheader.Identifier(**conf)
         i.identify(req)
         req.env.get.assert_called_once_with('wsgi.identity')
@@ -129,9 +129,9 @@ class TestHttpHeader(base.TestCase):
         gh_mock.side_effect = ['Aladdin', 'open sesame', 'genie']
         req.get_header = gh_mock
 
-        conf = dict(identify_httpheader_user='x-user',
-                    identify_httpheader_key='x-key',
-                    identify_httpheader_tenant='x-tenant')
+        conf = dict(httpheader_user='x-user',
+                    httpheader_key='x-key',
+                    httpheader_tenant='x-tenant')
         i = httpheader.Identifier(**conf)
         i.identify(req)
         req.env.get.assert_called_once_with('wsgi.identity')

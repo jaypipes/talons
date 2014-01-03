@@ -16,13 +16,13 @@
 
 import logging
 
-from talons import auth
 from talons import exc
+from talons.auth import interfaces
 
 LOG = logging.getLogger(__name__)
 
 
-class Identifier(auth.Identifies):
+class Identifier(interfaces.Identifies):
 
     """
     Looks in HTTP headers and stores identity in the request environ's
@@ -37,28 +37,28 @@ class Identifier(auth.Identifies):
 
         :param **conf:
 
-            identify_httpheader_user: HTTP header to look for user/login
-                                      name (required)
-            identify_httpheader_key: HTTP header to look for password/key
-                                     (required)
-            identify_httpheader_$ATTRIBUTE: HTTP header that, if found, will
-                                            be used to add $ATTRIBUTE to the
-                                            Identity object stored in the WSGI
-                                            pipeline. (optional)
+            httpheader_user: HTTP header to look for user/login
+                             name (required)
+            httpheader_key: HTTP header to look for password/key
+                            (required)
+            httpheader_$ATTRIBUTE: HTTP header that, if found, will
+                                   be used to add $ATTRIBUTE to the
+                                   Identity object stored in the WSGI
+                                   pipeline. (optional)
 
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
         """
-        self.user_header = conf.pop('identify_httpheader_user', None)
+        self.user_header = conf.pop('httpheader_user', None)
         if not self.user_header:
-            msg = ("Missing required identify_httpheader_user configuration "
+            msg = ("Missing required httpheader_user configuration "
                    "option.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
 
-        self.key_header = conf.pop('identify_httpheader_key', None)
+        self.key_header = conf.pop('httpheader_key', None)
         if not self.key_header:
-            msg = ("Missing required identify_httpheader_key configuration "
+            msg = ("Missing required httpheader_key configuration "
                    "option.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
@@ -70,11 +70,11 @@ class Identifier(auth.Identifies):
 
         self.attr_headers = {}
         for k, v in conf.items():
-            if k.startswith('identify_httpheader_'):
-                attr = k[20:]
+            if k.startswith('httpheader_'):
+                attr = k[11:]
                 if _is_bad_attr(attr):
                     msg = ("Found blacklisted attr name {0} in "
-                           "identify_httpheader configuration. "
+                           "httpheader configuration. "
                            "Stripping.").format(attr)
                     LOG.warn(msg)
                     continue
@@ -89,7 +89,7 @@ class Identifier(auth.Identifies):
         if not user_id or not key:
             return False
 
-        identity = auth.Identity(user_id, key=key)
+        identity = interfaces.Identity(user_id, key=key)
         for attr, header in self.attr_headers.items():
             setattr(identity, attr, request.get_header(header))
         request.env[self.IDENTITY_ENV_KEY] = identity

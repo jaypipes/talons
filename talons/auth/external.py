@@ -17,14 +17,14 @@
 import inspect
 import logging
 
-from talons import auth
 from talons import exc
 from talons import helpers
+from talons.auth import interfaces
 
 LOG = logging.getLogger(__name__)
 
 
-class Authenticator(auth.Authenticates):
+class Authenticator(interfaces.Authenticates):
 
     """
     Authenticates the supplied Identity by calling out to an external
@@ -38,16 +38,16 @@ class Authenticator(auth.Authenticates):
 
         :param **conf:
 
-            authenticate_external_authfn: Dotted-notation module.class.method
-                                          or module.function that will be used
-                                          to authenticate. This function will
-                                          accept as its only argument the
-                                          `talons.auth.Identity` object.
+            external_authfn: Dotted-notation module.class.method
+                             or module.function that will be used
+                             to authenticate. This function will
+                             accept as its only argument the
+                             `talons.interfaces.Identity` object.
 
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
         """
-        authfn = conf.pop('authenticate_external_authfn', None)
+        authfn = conf.pop('external_authfn', None)
         if not authfn:
             msg = ("Missing required authenticate_external_authfn "
                    "configuration option.")
@@ -58,7 +58,7 @@ class Authenticator(auth.Authenticates):
         try:
             self.authfn = helpers.import_function(authfn)
         except (TypeError, ImportError):
-            msg = ("authenticate_external_authfn either could not be found "
+            msg = ("external_authfn either could not be found "
                    "or was not callable.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
@@ -66,7 +66,7 @@ class Authenticator(auth.Authenticates):
         # Ensure that the auth function signature is what we expect
         spec = inspect.getargspec(self.authfn)
         if len(spec[0]) != 1:
-            msg = ("authenticate_external_authfn has an invalid function "
+            msg = ("external_authfn has an invalid function "
                    "signature. The function must take only a single "
                    "parameter.")
             LOG.error(msg)

@@ -18,8 +18,9 @@ import falcon
 import mock
 import testtools
 
-from talons import auth
 from talons import exc
+from talons.auth import middleware
+from talons.auth import interfaces
 
 from tests import base
 
@@ -27,31 +28,34 @@ from tests import base
 class TestCreateMiddleware(base.TestCase):
 
     def test_wrong_args(self):
-        i = mock.MagicMock(spec=auth.Identifies)
-        a = mock.MagicMock(spec=auth.Authenticates)
+        i = mock.MagicMock(spec=interfaces.Identifies)
+        a = mock.MagicMock(spec=interfaces.Authenticates)
         with testtools.ExpectedException(exc.BadConfiguration):
-            auth.create_middleware(None, None)
+            middleware.create_middleware(None, None)
         with testtools.ExpectedException(exc.BadConfiguration):
-            auth.create_middleware(i, None)
+            middleware.create_middleware(i, None)
         with testtools.ExpectedException(exc.BadConfiguration):
-            auth.create_middleware(None, a)
+            middleware.create_middleware(None, a)
         with testtools.ExpectedException(exc.BadConfiguration):
-            auth.create_middleware(dict(i=i), None)
+            middleware.create_middleware(dict(i=i), None)
         with testtools.ExpectedException(exc.BadConfiguration):
-            auth.create_middleware(None, dict(a=a))
+            middleware.create_middleware(None, dict(a=a))
         with testtools.ExpectedException(exc.BadConfiguration):
-            auth.create_middleware(a, i)
+            middleware.create_middleware(a, i)
         with testtools.ExpectedException(exc.BadConfiguration):
-            auth.create_middleware(auth.Authenticates, auth.Identifies)
+            middleware.create_middleware(interfaces.Authenticates,
+                                         interfaces.Identifies)
 
     def test_constructor_with_classes(self):
         conf = {
             'delay_401': True
         }
-        m = auth.create_middleware(auth.Identifies, auth.Authenticates, **conf)
-        self.assertTrue(isinstance(m, auth.Middleware))
-        self.assertTrue(isinstance(m.identifiers[0], auth.Identifies))
-        self.assertTrue(isinstance(m.authenticators[0], auth.Authenticates))
+        m = middleware.create_middleware(interfaces.Identifies,
+                                         interfaces.Authenticates, **conf)
+        self.assertTrue(isinstance(m, middleware.Middleware))
+        self.assertTrue(isinstance(m.identifiers[0], interfaces.Identifies))
+        self.assertTrue(isinstance(m.authenticators[0],
+                        interfaces.Authenticates))
 
 
 class TestMiddleware(base.TestCase):
@@ -68,7 +72,7 @@ class TestMiddleware(base.TestCase):
         a = mock.MagicMock()
         a.authenticate.return_value = False
 
-        m = auth.Middleware([i], [a], delay_401=True)
+        m = middleware.Middleware([i], [a], delay_401=True)
         self.assertEquals(None, m(req, None, None))
 
         calls = [mock.call('wsgi.identified', False)]
@@ -81,7 +85,7 @@ class TestMiddleware(base.TestCase):
         i.identify.return_value = True
         a.authenticate.return_value = True
 
-        m = auth.Middleware([i], [a], delay_401=True)
+        m = middleware.Middleware([i], [a], delay_401=True)
         self.assertEquals(None, m(req, None, None))
 
         calls = [mock.call('wsgi.identified', True),
@@ -91,13 +95,13 @@ class TestMiddleware(base.TestCase):
         a.reset_mock()
         a.authenticate.return_value = False
 
-        m = auth.Middleware([i], [a], delay_401=False)
+        m = middleware.Middleware([i], [a], delay_401=False)
         with testtools.ExpectedException(falcon.HTTPUnauthorized):
             m(req, None, None)
 
         i.reset_mock()
         i.identify.return_value = False
 
-        m = auth.Middleware([i], [a], delay_401=False)
+        m = middleware.Middleware([i], [a], delay_401=False)
         with testtools.ExpectedException(falcon.HTTPUnauthorized):
             m(req, None, None)

@@ -19,13 +19,13 @@ import logging
 
 import six
 
-from talons import auth
 from talons import compat
+from talons.auth import interfaces
 
 LOG = logging.getLogger(__name__)
 
 
-class Identifier(auth.Identifies):
+class Identifier(interfaces.Identifies):
 
     """
     Looks in HTTP Basic Access authentication headers and stores identity
@@ -60,8 +60,8 @@ class Identifier(auth.Identifies):
                 user_and_key = user_and_key.strip()
                 user_and_key = compat.decodebytes(user_and_key)
                 user_id, key = user_and_key.split(six.b(':'), 1)
-                identity = auth.Identity(compat.b2u(user_id),
-                                         key=compat.b2u(key))
+                identity = interfaces.Identity(compat.b2u(user_id),
+                                               key=compat.b2u(key))
                 request.env[self.IDENTITY_ENV_KEY] = identity
                 return True
             except (binascii.Error, ValueError) as err:
