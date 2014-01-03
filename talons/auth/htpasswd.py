@@ -19,13 +19,13 @@ import os
 
 from passlib import apache
 
-from talons import auth
 from talons import exc
+from talons.auth import interfaces
 
 LOG = logging.getLogger(__name__)
 
 
-class Authenticator(auth.Authenticates):
+class Authenticator(interfaces.Authenticates):
 
     """
     Authenticates the supplied Identity by querying an Apache htpasswd file.
@@ -38,14 +38,14 @@ class Authenticator(auth.Authenticates):
 
         :param **conf:
 
-            authenticate_htpasswd_path: Path to the Apache htpasswd file.
+            htpasswd_path: Path to the Apache htpasswd file.
 
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
         """
-        htpath = conf.pop('authenticate_htpasswd_path', None)
+        htpath = conf.pop('htpasswd_path', None)
         if not htpath:
-            msg = ("Missing required authenticate_htpasswd_path "
+            msg = ("Missing required htpasswd_path "
                    "configuration option.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)

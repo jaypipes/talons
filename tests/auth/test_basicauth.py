@@ -16,7 +16,7 @@
 
 import mock
 
-from talons.auth.identify import basicauth
+from talons.auth import basicauth
 
 from tests import base
 
@@ -64,7 +64,7 @@ class TestBasicAuth(base.TestCase):
         e_prop = mock.PropertyMock(return_value=dict())
         type(req).env = e_prop
 
-        mod_cls = 'talons.auth.identify.basicauth.auth.Identity'
+        mod_cls = 'talons.auth.interfaces.Identity'
         with mock.patch(mod_cls) as i_mock:
             i = basicauth.Identifier()
             i.identify(req)
@@ -81,7 +81,7 @@ class TestBasicAuth(base.TestCase):
         e_prop = mock.PropertyMock(return_value=dict())
         type(req).env = e_prop
 
-        mod_cls = 'talons.auth.identify.basicauth.auth.Identity'
+        mod_cls = 'talons.auth.interfaces.Identity'
         with mock.patch(mod_cls) as i_mock:
             i = basicauth.Identifier()
             i.identify(req)
@@ -96,7 +96,7 @@ class TestBasicAuth(base.TestCase):
         e_prop = mock.PropertyMock(return_value=dict())
         type(req).env = e_prop
 
-        mod_cls = 'talons.auth.identify.basicauth.auth.Identity'
+        mod_cls = 'talons.auth.interfaces.Identity'
         with mock.patch(mod_cls) as i_mock:
             i = basicauth.Identifier()
             i.identify(req)

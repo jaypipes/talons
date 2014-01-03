@@ -18,7 +18,7 @@ import mock
 import testtools
 
 from talons import exc
-from talons.auth.authenticate import external
+from talons.auth import external
 
 from tests import base
 
@@ -34,14 +34,14 @@ class TestExternal(base.TestCase):
         with mock.patch('talons.helpers.import_function') as mocked:
             mocked.side_effect = ImportError
             with testtools.ExpectedException(exc.BadConfiguration):
-                conf = dict(authenticate_external_authfn='this.not.exist')
+                conf = dict(external_authfn='this.not.exist')
                 external.Authenticator(**conf)
 
     def test_authfn_not_callable(self):
         with mock.patch('talons.helpers.import_function') as mocked:
             mocked.side_effect = TypeError
             with testtools.ExpectedException(exc.BadConfiguration):
-                conf = dict(authenticate_external_authfn='this.not.callable')
+                conf = dict(external_authfn='this.not.callable')
                 external.Authenticator(**conf)
 
     def test_authfn_wrong_signature(self):
@@ -50,7 +50,7 @@ class TestExternal(base.TestCase):
         with mock.patch('talons.helpers.import_function') as mocked:
             mocked.return_value = authme
             with testtools.ExpectedException(exc.BadConfiguration):
-                conf = dict(authenticate_external_authfn='authme')
+                conf = dict(external_authfn='authme')
                 external.Authenticator(**conf)
 
     def test_authfn_called(self):
@@ -59,6 +59,6 @@ class TestExternal(base.TestCase):
 
         with mock.patch('talons.helpers.import_function') as mocked:
             mocked.return_value = authme
-            conf = dict(authenticate_external_authfn='authme')
+            conf = dict(external_authfn='authme')
             auth = external.Authenticator(**conf)
             self.assertEquals('this', auth.authenticate('this'))
