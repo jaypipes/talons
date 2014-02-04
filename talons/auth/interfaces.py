@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 #
-# Copyright 2013 Jay Pipes
+# Copyright 2013-2014 Jay Pipes
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -84,6 +84,22 @@ class Authenticates(object):
     def authenticate(self, identity):
         """
         Looks at the supplied identity object and returns True if the
-        credentials can be verified, False otherwise.
+        credentials can be verified, False otherwise. If the plugin also
+        retrieves role or group information, it may modify the supplied
+        Identity object.
         """
         raise NotImplementedError  # pragma: NO COVER
+
+    def sets_roles(self):
+        """
+        Returns True if the authenticator plugin decorates the Identity
+        object with a set of roles, False otherwise.
+        """
+        return False
+
+    def sets_groups(self):
+        """
+        Returns True if the authenticator plugin decorates the Identity
+        object with a set of groups, False otherwise.
+        """
+        return False
