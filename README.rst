@@ -179,19 +179,32 @@ Talons comes with a few simple examples of Authenticator plugins.
 ``talons.auth.external.Authenticator``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A generic Authenticator plugin that has a single configuration option,
+A generic Authenticator plugin that has one main configuration option,
 ``authenticate_external_authfn`` which should be the "module.function"
 or "module.class.method" dotted-import notation for a function or class
 method that accepts a single parameter. This function will be called by
 the instance of ``talons.auth.authenticate.external.Authenticator`` to
 validate the credentials of a request.
 
+In addition, there are two other configuration options that indicate
+whether the ``external_authfn`` function may set the roles or groups
+attributes on the supplied identity:
+
+-  ``external_sets_roles``: Boolean (defaults to False). A True value
+   indicates the plugin may set the roles attribute on the identity
+   object.
+
+-  ``external_sets_groups``: Boolean (defaults to False). A True value
+   indicates the plugin may set the groups attribute on the identity
+   object.
+
 Example
 ^^^^^^^
 
 Suppose we have some application code that looks up a stored password
 for a user in a ```Redis`` <http://redis.io>`__ Key-Value Store. Salted,
-encrypted passwords for each user are stored in the Redis KVS.
+encrypted passwords for each user are stored in the Redis KVS, along
+with a comma-separated list of roles the user belongs to.
 
 Our application has a Python file called ``/application/auth.py`` that
 looks like this:
@@ -218,16 +231,23 @@ looks like this:
         user = identity.login
         pass = identity.key
 
-        stored_pass = _AUTH_DB.get(user)
-        if stored_pass:
-            return _pass_matches_stored_pass(pass, stored_pass)
-        return False
+        # Assume that user "records" are stored in Redid in the following format:
+        # salt:hashedpass#roles
+        # Where roles is a comma-separated list of roles
+        user_record = _AUTH_DB.get(user)
+        if user_record:
+            stored_pass, role_list = user_record.split('#')
+            auth_success = _pass_matches_stored_pass(pass, stored_pass)
+            if auth_success:
+                identity.roles = role_list.split(',')
+        return auth_success
 
 To use the above ``application.auth.authenticate`` method for
 authenticating identities, we'd supply the following configuration
 options to the ``talons.auth.external.Authenticator`` constructor:
 
 -  ``external_authfn=application.auth.authenticate``
+-  ``external_sets_roles=True``
 
 ``talons.auth.htpasswd.Authenticator``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

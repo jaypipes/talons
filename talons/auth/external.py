@@ -42,7 +42,13 @@ class Authenticator(interfaces.Authenticates):
                              or module.function that will be used
                              to authenticate. This function will
                              accept as its only argument the
-                             `talons.interfaces.Identity` object.
+                             `talons.interfaces.auth.Identity` object.
+            external_sets_roles: Boolean (defaults to False) of whether the
+                                 external authentication function will set the
+                                 roles attribute of the Identity object.
+            external_sets_groups: Boolean (defaults to False) of whether the
+                                  external authentication function will set
+                                  the groups attribute of the Identity object.
 
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
@@ -72,9 +78,26 @@ class Authenticator(interfaces.Authenticates):
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
 
+        self.sets_roles = conf.get('external_sets_roles', False)
+        self.sets_groups = conf.get('external_sets_groups', False)
+
     def authenticate(self, identity):
         """
         Looks at the supplied identity object and returns True if the
         credentials can be verified, False otherwise.
         """
         return self.authfn(identity)
+
+    def sets_roles(self):
+        """
+        Returns True if the authenticator plugin decorates the Identity
+        object with a set of roles, False otherwise.
+        """
+        return self.sets_roles
+
+    def sets_groups(self):
+        """
+        Returns True if the authenticator plugin decorates the Identity
+        object with a set of groups, False otherwise.
+        """
+        return self.sets_groups
