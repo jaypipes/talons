@@ -34,3 +34,7 @@ class TestHelpers(base.TestCase):
     def test_not_callable(self):
         with testtools.ExpectedException(TypeError):
             helpers.import_function('sys.stdout')
+
+    def test_return_function(self):
+        fn = helpers.import_function('os.path.join')
+        self.assertEqual(callable(fn), True)

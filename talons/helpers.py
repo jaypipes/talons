@@ -48,3 +48,4 @@ def import_function(import_str):
         err_details = traceback.format_exception(*sys.exc_info())
         LOG.error(msg + ' Details: (%s)'.format(err_details))
         raise
+    return fn
