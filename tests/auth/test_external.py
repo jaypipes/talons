@@ -62,3 +62,5 @@ class TestExternal(base.TestCase):
             conf = dict(external_authfn='authme')
             auth = external.Authenticator(**conf)
             self.assertEquals('this', auth.authenticate('this'))
+            self.assertFalse(auth.sets_roles())
+            self.assertFalse(auth.sets_groups())
