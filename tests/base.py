@@ -17,7 +17,10 @@
 import logging
 
 import fixtures
+import mock
 import testtools
+
+LOG_FORMAT = "[%(levelname)-7s] %(msg)s"
 
 
 class TestCase(testtools.TestCase):
@@ -27,5 +30,25 @@ class TestCase(testtools.TestCase):
     """
 
     def setUp(self):
-        self.useFixture(fixtures.FakeLogger(level=logging.DEBUG))
+        self.useFixture(fixtures.FakeLogger(level=logging.DEBUG,
+                                            format=LOG_FORMAT))
         super(TestCase, self).setUp()
+
+    def patch(self, target, *args, **kwargs):
+        """
+        Returns a started `mock.patch` object for the supplied target.
+
+        The caller may then call the returned patcher to create a mock object.
+
+        The caller does not need to call stop() on the returned
+        patcher object, as this method automatically adds a cleanup
+        to the test class to stop the patcher.
+
+        :param target: String module.class or module.object expression to patch
+        :param **kwargs: Passed as-is to `mock.patch`. See mock documentation
+                         for details.
+        """
+        p = mock.patch(target, *args, **kwargs)
+        m = p.start()
+        self.addCleanup(p.stop)
+        return m

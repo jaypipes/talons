@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 #
-# Copyright 2013 Jay Pipes
+# Copyright 2013-2014 Jay Pipes
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -45,26 +45,35 @@ class TestCreateMiddleware(base.TestCase):
         with testtools.ExpectedException(exc.BadConfiguration):
             middleware.create_middleware(interfaces.Authenticates,
                                          interfaces.Identifies)
+        with testtools.ExpectedException(exc.BadConfiguration):
+            middleware.create_middleware(interfaces.Identifies,
+                                         interfaces.Authenticates,
+                                         interfaces.Identifies)
 
     def test_constructor_with_classes(self):
         conf = {
             'delay_401': True
         }
         m = middleware.create_middleware(interfaces.Identifies,
-                                         interfaces.Authenticates, **conf)
+                                         interfaces.Authenticates,
+                                         interfaces.Authorizes,
+                                         **conf)
         self.assertTrue(isinstance(m, middleware.Middleware))
         self.assertTrue(isinstance(m.identifiers[0], interfaces.Identifies))
         self.assertTrue(isinstance(m.authenticators[0],
                         interfaces.Authenticates))
+        self.assertTrue(isinstance(m.authorizer, interfaces.Authorizes))
 
 
 class TestMiddleware(base.TestCase):
 
-    def test_delay_401(self):
+    def test_call(self):
 
         req = mock.MagicMock()
         req.env = mock.MagicMock()
         req.env.__setitem__ = mock.MagicMock()
+        meth_mock = mock.PropertyMock(return_value=mock.sentinel.method)
+        type(req).method = meth_mock
 
         i = mock.MagicMock()
         i.identify.return_value = False
@@ -72,7 +81,8 @@ class TestMiddleware(base.TestCase):
         a = mock.MagicMock()
         a.authenticate.return_value = False
 
-        m = middleware.Middleware([i], [a], delay_401=True)
+        m = middleware.Middleware([i], [a], None, delay_401=True,
+                                  delay_403=True, default_authorize=True)
         self.assertEquals(None, m(req, None, None))
 
         calls = [mock.call('wsgi.identified', False)]
@@ -85,23 +95,74 @@ class TestMiddleware(base.TestCase):
         i.identify.return_value = True
         a.authenticate.return_value = True
 
-        m = middleware.Middleware([i], [a], delay_401=True)
+        m = middleware.Middleware([i], [a], None, delay_401=True,
+                                  delay_403=True, default_authorize=True)
         self.assertEquals(None, m(req, None, None))
 
         calls = [mock.call('wsgi.identified', True),
-                 mock.call('wsgi.authenticated', True)]
+                 mock.call('wsgi.authenticated', True),
+                 mock.call('wsgi.authorized', True)]
+        self.assertEquals(calls, req.env.__setitem__.call_args_list)
+
+        req.reset_mock()
+
+        m = middleware.Middleware([i], [a], None, delay_401=True,
+                                  delay_403=True, default_authorize=False)
+        self.assertEquals(None, m(req, None, None))
+
+        calls = [mock.call('wsgi.identified', True),
+                 mock.call('wsgi.authenticated', True),
+                 mock.call('wsgi.authorized', False)]
         self.assertEquals(calls, req.env.__setitem__.call_args_list)
 
         a.reset_mock()
         a.authenticate.return_value = False
 
-        m = middleware.Middleware([i], [a], delay_401=False)
+        m = middleware.Middleware([i], [a], None, delay_401=False)
         with testtools.ExpectedException(falcon.HTTPUnauthorized):
             m(req, None, None)
 
         i.reset_mock()
         i.identify.return_value = False
+        req.reset_mock()
 
         m = middleware.Middleware([i], [a], delay_401=False)
         with testtools.ExpectedException(falcon.HTTPUnauthorized):
+            m(req, None, None)
+
+        a.reset_mock()
+        i.reset_mock()
+        req.reset_mock()
+
+        z = mock.MagicMock()
+        z.authorize.return_value = False
+
+        i.identify.return_value = True
+        a.authenticate.return_value = True
+
+        res = self.patch('talons.auth.interfaces.ResourceAction')
+        res.return_value = mock.sentinel.resource
+
+        m = middleware.Middleware([i], [a], z, delay_401=True,
+                                  delay_403=True, default_authorize=True)
+        self.assertEquals(None, m(req, None, None))
+
+        calls = [mock.call('wsgi.identified', True),
+                 mock.call('wsgi.authenticated', True),
+                 mock.call('wsgi.authorized', False)]
+        self.assertEquals(calls, req.env.__setitem__.call_args_list)
+        z.authorize.assert_called_once_with(mock.ANY, mock.sentinel.resource)
+
+        a.reset_mock()
+        i.reset_mock()
+        z.reset_mock()
+        req.reset_mock()
+
+        i.identify.return_value = True
+        a.authenticate.return_value = True
+        z.authorize.return_value = False
+
+        m = middleware.Middleware([i], [a], z, delay_401=False,
+                                  delay_403=False)
+        with testtools.ExpectedException(falcon.HTTPForbidden):
             m(req, None, None)

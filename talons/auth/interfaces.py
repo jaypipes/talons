@@ -30,6 +30,64 @@ class Identity(object):
         self.roles = set(roles)
 
 
+class ResourceAction(object):
+
+    """
+    Concrete class that exposes identity information as well as
+    credentials and authorization information (like roles and group
+    membership).
+    """
+
+    def __init__(self, request, params):
+        """
+        Constructs a ResourceAction object from a `falcon.request.Request`
+        object and a dict of params.
+        
+        The ResourceAction object is used by various plugins to describe the
+        HTTP request in a static descriptor way.
+
+        :param request: The `falcon.request.Request` object representing the
+                        HTTP request to a falcon app.
+        :param params: A dict of parameters that was parsed by the falcon
+                       app from the requested URI. The parameters represent
+                       matched field expressions that the responder object's
+                       path_template matched at routing time.
+        """
+        self.request = request
+        self.params = params
+        path = request.env['PATH_INFO']
+        # Cut off the query string
+        path = path.split('?')[0]
+        self._dot_string = path.replace('/', '.').strip('.') + '.'
+        self._dot_string = self._dot_string + request.method.lower()
+
+    def to_string(self):
+        """
+        Returns a string in a dotted-notation format that describes the HTTP
+        request that was made to the Falcon app. The HTTP method is always
+        the last element of the dotted-notation string.
+
+        As an example, if an HTTP request was made to:
+
+          GET /users/123/groups/ABC
+
+        The `talons.resource.Resource` object that would be constructed from
+        the Falcon request would return the following from the `to_string`
+        method:
+
+          users.123.groups.ABC.get
+
+        Likewise, an HTTP request to:
+
+          POST /orgs
+
+        would yield this string from `to_string`:
+
+          orgs.post
+        """
+        return self._dot_string
+
+
 class Identifies(object):
 
     """
@@ -95,11 +153,48 @@ class Authenticates(object):
         Returns True if the authenticator plugin decorates the Identity
         object with a set of roles, False otherwise.
         """
-        return False
+        return False  # pragma: NO COVER
 
     def sets_groups(self):
         """
         Returns True if the authenticator plugin decorates the Identity
         object with a set of groups, False otherwise.
         """
-        return False
+        return False  # pragma: NO COVER
+
+
+class Authorizes(object):
+
+    """
+    Base class for plugins that act to authorize an identity to perform
+    an action against a particular resource.
+    """
+
+    def __init__(self, **conf):
+        """
+        Construct a concrete object with a set of keyword configuration
+        options.
+
+        :param **conf: Free-form keyword arguments. Concrete
+                       implementations should document the keyword arguments
+                       that the plugin cares about.
+        :raises `talons.exc.BadConfiguration` if configuration options
+                are not valid or conflict with each other.
+        """
+        pass
+
+    def authorize(self, identity, resource, action):
+        """
+        Looks at the supplied identity object and returns True if the
+        identity has the authority to perform the supplied action against
+        the supplied resource, False otherwise.
+
+        :param identity: The `talons.auth.interfaces.Identity` object for
+                         which we should determine authorization.
+        :param resource: A `talons.resource.Resource` object that describes the
+                         resource that the identity is attempting to perform
+                         the action against.
+        :param action: A string describing the action that should be checked
+                       for authorization.
+        """
+        raise NotImplementedError  # pragma: NO COVER

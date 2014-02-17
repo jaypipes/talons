@@ -38,7 +38,7 @@ class Authenticator(interfaces.Authenticates):
 
         :param **conf:
 
-            external_authfn: Dotted-notation module.class.method
+            external_authn_callable: Dotted-notation module.class.method
                              or module.function that will be used
                              to authenticate. This function will
                              accept as its only argument the
@@ -53,9 +53,10 @@ class Authenticator(interfaces.Authenticates):
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
         """
-        authfn = conf.pop('external_authfn', None)
+        authfn = conf.pop('external_authn_callable',
+                    conf.pop('external_authfn', None))  # Backwards-compat
         if not authfn:
-            msg = ("Missing required authenticate_external_authfn "
+            msg = ("Missing required external_authfn "
                    "configuration option.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
@@ -78,8 +79,8 @@ class Authenticator(interfaces.Authenticates):
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
 
-        self.sets_roles = conf.get('external_sets_roles', False)
-        self.sets_groups = conf.get('external_sets_groups', False)
+        self._sets_roles = conf.get('external_sets_roles', False)
+        self._sets_groups = conf.get('external_sets_groups', False)
 
     def authenticate(self, identity):
         """
@@ -93,11 +94,70 @@ class Authenticator(interfaces.Authenticates):
         Returns True if the authenticator plugin decorates the Identity
         object with a set of roles, False otherwise.
         """
-        return self.sets_roles
+        return self._sets_roles
 
     def sets_groups(self):
         """
         Returns True if the authenticator plugin decorates the Identity
         object with a set of groups, False otherwise.
         """
-        return self.sets_groups
+        return self._sets_groups
+
+
+class Authorizer(interfaces.Authorizes):
+
+    """
+    Authorizes the supplied Identity and ResourceAction by calling out to
+    an external function.
+    """
+
+    def __init__(self, **conf):
+        """
+        Construct a concrete object with a set of keyword configuration
+        options.
+
+        :param **conf:
+
+            external_authz_callable: Dotted-notation module.class.method
+                              or module.function that will be used
+                              to authorize. This function will
+                              accept as its only two arguments a
+                              `talons.interfaces.auth.Identity` object
+                              and a `talons.interfaces.auth.RequestAction`
+                              object.
+
+        :raises `talons.exc.BadConfiguration` if configuration options
+                are not valid or conflict with each other.
+        """
+        authfn = conf.pop('external_authzfn', None)
+        if not authfn:
+            msg = ("Missing required external_authzfn "
+                   "configuration option.")
+            LOG.error(msg)
+            raise exc.BadConfiguration(msg)
+
+        # Try import'ing the auth function to ensure that it exists
+        try:
+            self.authfn = helpers.import_function(authfn)
+        except (TypeError, ImportError):
+            msg = ("external_authzfn either could not be found "
+                   "or was not callable.")
+            LOG.error(msg)
+            raise exc.BadConfiguration(msg)
+
+        # Ensure that the auth function signature is what we expect
+        spec = inspect.getargspec(self.authfn)
+        if len(spec[0]) != 2:
+            msg = ("external_authzfn has an invalid function "
+                    "signature. The function must take two arguments: "
+                   "an identity and a request action.")
+            LOG.error(msg)
+            raise exc.BadConfiguration(msg)
+
+    def authorize(self, identity, request_action):
+        """
+        Looks at the supplied identity object and returns True if the
+        credentials are authorized to perform the requested action,
+        False otherwise
+        """
+        return self.authfn(identity, request_action)

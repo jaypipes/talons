@@ -235,6 +235,19 @@ the credentials of a request. The plugin has a single configuration option:
  * `htpasswd_path`: The filepath to the Apache htpasswd file to
    use for authentication checks.
 
+## Authorizers
+
+Each class that derives from `talons.auth.interfaces.Authorizes` is
+called an "Authorizer". Each Authorizer implements a single method,
+`authorize()`, that takes a `talons.auth.interfaces.Identity` object,
+a `talons.auth.interfaces.ResourceAction` object.
+
+At present, there is only a single Authorizer built in to Talons: the
+`talons.auth.external.Authorizer` class. Like its sister, the
+`talons.auth.external.Authenticator`, it accepts an external callable that
+accepts the identity and resource action parameters and returns whether
+the identity is allowed to perform the action on the resource.
+
 Why `talons.auth`?
 ==================
 

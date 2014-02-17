@@ -24,12 +24,14 @@ import falcon
 
 class Middleware(object):
 
-    def __init__(self, identifiers, authenticators, **conf):
+    def __init__(self, identifiers, authenticators, authorizer=None, **conf):
         """
         Construct a concrete object with a set of keyword configuration
         options.
         :param identifiers: List of objects that can identify a user.
         :param authenticators: List of objects that can authenticate a user.
+        :param authorizers: List of objects that can authorize a user to
+                            perform an action against a resource.
         :param **conf:
 
             delay_401: If set, this will prevent a 401 Unauthorized
@@ -45,12 +47,36 @@ class Middleware(object):
                        Likewise, the 'wsgi.authenticated' value will be True
                        if the credentials were validated, False otherwise.
 
+            delay_403: If set, this will prevent a 403 Forbidden
+                       from being sent immediately back to the user if
+                       the identity was not authorized to perform an action
+                       on the supplied resource. Instead, this setting
+                       simply continues execution of the WSGI pipeline, and
+                       leaves it up to the downstream application to determine
+                       whether or not to return a 403. The downstream
+                       application can check the value of the request
+                       environ's 'wsgi.authorized' value, which will be True
+                       if the identity was authorized to perform the action
+                       against the resource, False otherwise. Note that the
+                       value of `wsgi.identified` and `wsgi.authenticated` may
+                       be False. This indicates that no identity was found
+                       (the request was anonymous) or that the identity was
+                       not authenticated (essentially meaning that
+                       authorization would be for an anonymous identity).
+
+            default_authorized: Sets the value of the 'wsgi.authorized'
+                                WSGI environment value when there is no
+                                authorizer parameter. (defaults to False)
+
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
         """
         self.identifiers = identifiers
         self.authenticators = authenticators
+        self.authorizer = authorizer
         self.delay_401 = conf.get('delay_401', False)
+        self.delay_403 = conf.get('delay_403', False)
+        self.default_authorize = conf.get('default_authorize', False)
 
     def raise_401_no_identity(self):
         raise falcon.HTTPUnauthorized('Authentication required',
@@ -59,6 +85,11 @@ class Middleware(object):
     def raise_401_fail_authenticate(self):
         raise falcon.HTTPUnauthorized('Authentication required',
                                       'Authentication failed.')
+
+    def raise_403(self):
+        raise falcon.HTTPForbidden('Action not allowed',
+                                   'The action on that resource is '
+                                   'not allowed.')
 
     def __call__(self, request, response, params):
         identified = False
@@ -84,13 +115,23 @@ class Middleware(object):
         if not authenticated and not self.delay_401:
             self.raise_401_fail_authenticate()
 
+        authorized = self.default_authorize
+        if self.authorizer is not None:
+            res = interfaces.ResourceAction(request, params)
+            authorized = self.authorizer.authorize(identity, res)
 
-def create_middleware(identify_with, authenticate_with, **conf):
+        request.env['wsgi.authorized'] = authorized
+        if not authorized and not self.delay_403:
+            self.raise_403()
+
+
+def create_middleware(identify_with, authenticate_with,
+                      authorize_with=None, **conf):
     """
     Helper method to create middleware that can be supplied to Falcon's
     `falcon.API` method as a before argument.
 
-    :param identify_with: List of objects that use the
+    :param identify_with: List of classes that use the
                           `talons.auth.interfaces.Identifies`
                           interface. These objects will have their `identify`
                           method called in the order in which they are
@@ -99,11 +140,17 @@ def create_middleware(identify_with, authenticate_with, **conf):
                           then an object will
                           be instantiated of that class, with the configuration
                           options passed into its constructor.
-    :param authenticate_with: List of objects that use the
+    :param authenticate_with: List of classes that use the
                               `talons.auth.interfaces.Authenticates` interface.
                               These objects will have their `authenticate`
                               method called in the order in which they are
                               specified.
+    :param authorize_with: An optional class that uses the
+                           `talons.auth.interfaces.Authorizes` interface.
+                           This object will have its `authorize`
+                           method called to verify if the requesting identity
+                           is authorized to perform the HTTP method against
+                           the requested resource.
     :param **conf: Configuration option dictionary that will be supplied
                    to the identifiers and authenticators.
 
@@ -131,7 +178,18 @@ def create_middleware(identify_with, authenticate_with, **conf):
         if not isinstance(a, interfaces.Authenticates):
             msg = ("{0} is not a subclass of "
                    "`talons.auth.interfaces.Authenticates`")
-            msg = msg.format(i.__class__.__name__)
+            msg = msg.format(a.__class__.__name__)
             raise exc.BadConfiguration(msg)
 
-    return Middleware(identify_with, authenticate_with, **conf)
+    if authorize_with is not None:
+        if inspect.isclass(authorize_with):
+            if issubclass(authorize_with, interfaces.Authorizes):
+                authorize_with = authorize_with(**conf)
+        if not isinstance(authorize_with, interfaces.Authorizes):
+            msg = ("{0} is not a subclass of "
+                   "`talons.auth.interfaces.Authorizes`")
+            msg = msg.format(authorize_with.__class__.__name__)
+            raise exc.BadConfiguration(msg)
+
+    return Middleware(identify_with, authenticate_with,
+                      authorize_with, **conf)
