@@ -159,7 +159,7 @@ Talons comes with a few simple examples of Authenticator plugins.
 ### `talons.auth.external.Authenticator`
 
 A generic Authenticator plugin that has one main configuration option,
-`authenticate_external_authfn` which should be the "module.function" or
+`external_authn_fn` which should be the "module.function" or
 "module.class.method" dotted-import notation for a function or class
 method that accepts a single parameter. This function will be called by
 the instance of `talons.auth.authenticate.external.Authenticator` to
@@ -224,7 +224,7 @@ To use the above `application.auth.authenticate` method for authenticating
 identities, we'd supply the following configuration options to the
 `talons.auth.external.Authenticator` constructor:
 
- * `external_authfn=application.auth.authenticate`
+ * `external_authn_fn=application.auth.authenticate`
  * `external_sets_roles=True`
 
 ### `talons.auth.htpasswd.Authenticator`
@@ -242,11 +242,78 @@ called an "Authorizer". Each Authorizer implements a single method,
 `authorize()`, that takes a `talons.auth.interfaces.Identity` object,
 a `talons.auth.interfaces.ResourceAction` object.
 
+The `ResourceAction` object currently has a single method, `to_string`,
+that returns a "dotted-notation" string describing the requested
+HTTP resource.
+
+For instance, let's say the identity made an HTTP request to:
+
+    POST /users/12345/groups
+
+The `ResourceAction.to_string` method that is supplied to the `authorize`
+function would yield the string "users.12345.groups.post". This string is
+useful to plugins that compare the string with the supplied identity object.
+See below for an example that makes this more clear.
+
 At present, there is only a single Authorizer built in to Talons: the
 `talons.auth.external.Authorizer` class. Like its sister, the
 `talons.auth.external.Authenticator`, it accepts an external callable that
 accepts the identity and resource action parameters and returns whether
-the identity is allowed to perform the action on the resource.
+the identity is allowed to perform the action on the resource. The single
+configuration parameter is called `external_authz_fn`.
+
+Let's continue the example from above and add an external callable that
+will be used as an authorizer. This callable will compare the result of
+the `ResourceAction`'s `to_string` method against the supplied identity
+object and a hashmap of regular expressions in order to determine if the
+user is permitted to perform an action.
+
+Assuming our application has a Python file called `/application/auth.py` that
+contains the above authenticate code, as well as this:
+like this:
+
+```python
+import re
+
+
+def self_or_admin(match, identity):
+    """
+    Returns True if the identity has an admin role or the identity
+    matches the requesting user.
+    """
+    if "admin" in identity.roles:
+        return True
+    return match.groups(1) == identity.login
+
+
+def anyone(*args):
+    return True
+
+
+_POLICY_RULES = [
+    (r'^users\.(^\.)+\.get$', self_or_admin),
+    (r'^users\.post$', anyone),
+]
+POLICIES = []
+for regex, fn in _POLICY_RULES:
+    POLICIES.append((re.compile(regex), fn))
+
+
+def authorize(identity, resource_action):
+    user = identity.login
+    res_string = resource_action.to_string()
+    for p, fn in _POLICIES:
+        m = p.match(res_string)
+        if m:
+            return fn(m, identity)
+```
+
+To use the above `application.auth.authorize` method for authorizing the
+identity that was authenticated, we'd supply the following configuration
+options to the `talons.auth.external.Authorizer` constructor:
+
+ * `external_authz_fn=application.auth.authorize`
+
 
 Why `talons.auth`?
 ==================
