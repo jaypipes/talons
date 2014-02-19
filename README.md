@@ -159,7 +159,7 @@ Talons comes with a few simple examples of Authenticator plugins.
 ### `talons.auth.external.Authenticator`
 
 A generic Authenticator plugin that has one main configuration option,
-`external_authn_fn` which should be the "module.function" or
+`external_authn_callable` which should be the "module.function" or
 "module.class.method" dotted-import notation for a function or class
 method that accepts a single parameter. This function will be called by
 the instance of `talons.auth.authenticate.external.Authenticator` to
@@ -224,7 +224,7 @@ To use the above `application.auth.authenticate` method for authenticating
 identities, we'd supply the following configuration options to the
 `talons.auth.external.Authenticator` constructor:
 
- * `external_authn_fn=application.auth.authenticate`
+ * `external_authn_callable=application.auth.authenticate`
  * `external_sets_roles=True`
 
 ### `talons.auth.htpasswd.Authenticator`
@@ -260,7 +260,7 @@ At present, there is only a single Authorizer built in to Talons: the
 `talons.auth.external.Authenticator`, it accepts an external callable that
 accepts the identity and resource action parameters and returns whether
 the identity is allowed to perform the action on the resource. The single
-configuration parameter is called `external_authz_fn`.
+configuration parameter is called `external_authz_callable`.
 
 Let's continue the example from above and add an external callable that
 will be used as an authorizer. This callable will compare the result of
@@ -312,7 +312,7 @@ To use the above `application.auth.authorize` method for authorizing the
 identity that was authenticated, we'd supply the following configuration
 options to the `talons.auth.external.Authorizer` constructor:
 
- * `external_authz_fn=application.auth.authorize`
+ * `external_authz_callable=application.auth.authorize`
 
 
 Why `talons.auth`?
