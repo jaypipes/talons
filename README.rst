@@ -265,7 +265,7 @@ Authorizers
 Each class that derives from ``talons.auth.interfaces.Authorizes`` is
 called an "Authorizer". Each Authorizer implements a single method,
 ``authorize()``, that takes a ``talons.auth.interfaces.Identity``
-object, a ``talons.auth.interfaces.ResourceAction`` object.
+object, and a ``talons.auth.interfaces.ResourceAction`` object.
 
 The ``ResourceAction`` object currently has a single method,
 ``to_string``, that returns a "dotted-notation" string describing the
