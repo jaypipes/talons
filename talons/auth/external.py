@@ -129,9 +129,9 @@ class Authorizer(interfaces.Authorizes):
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
         """
-        authfn = conf.pop('external_authzfn', None)
+        authfn = conf.pop('external_authz_callable', None)
         if not authfn:
-            msg = ("Missing required external_authzfn "
+            msg = ("Missing required external_authz_callable "
                    "configuration option.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
@@ -140,7 +140,7 @@ class Authorizer(interfaces.Authorizes):
         try:
             self.authfn = helpers.import_function(authfn)
         except (TypeError, ImportError):
-            msg = ("external_authzfn either could not be found "
+            msg = ("external_authz_callable either could not be found "
                    "or was not callable.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
@@ -148,7 +148,7 @@ class Authorizer(interfaces.Authorizes):
         # Ensure that the auth function signature is what we expect
         spec = inspect.getargspec(self.authfn)
         if len(spec[0]) != 2:
-            msg = ("external_authzfn has an invalid function "
+            msg = ("external_authz_callable has an invalid function "
                     "signature. The function must take two arguments: "
                    "an identity and a request action.")
             LOG.error(msg)
