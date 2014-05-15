@@ -42,7 +42,7 @@ class ResourceAction(object):
         """
         Constructs a ResourceAction object from a `falcon.request.Request`
         object and a dict of params.
-        
+
         The ResourceAction object is used by various plugins to describe the
         HTTP request in a static descriptor way.
 

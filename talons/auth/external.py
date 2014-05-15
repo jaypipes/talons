@@ -53,8 +53,11 @@ class Authenticator(interfaces.Authenticates):
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
         """
-        authfn = conf.pop('external_authn_callable',
-                    conf.pop('external_authfn', None))  # Backwards-compat
+        authfn = conf.pop(
+            'external_authn_callable',
+            conf.pop('external_authfn', None)
+        )  # Backwards-compat
+
         if not authfn:
             msg = ("Missing required external_authfn "
                    "configuration option.")
@@ -149,7 +152,7 @@ class Authorizer(interfaces.Authorizes):
         spec = inspect.getargspec(self.authfn)
         if len(spec[0]) != 2:
             msg = ("external_authz_callable has an invalid function "
-                    "signature. The function must take two arguments: "
+                   "signature. The function must take two arguments: "
                    "an identity and a request action.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
