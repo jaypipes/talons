@@ -38,11 +38,12 @@ class Authenticator(interfaces.Authenticates):
 
         :param **conf:
 
-            external_authn_callable: Dotted-notation module.class.method
-                             or module.function that will be used
-                             to authenticate. This function will
-                             accept as its only argument the
-                             `talons.interfaces.auth.Identity` object.
+            external_authn_callable: Either an actual callable, or a string
+                                     in dotted-notation
+                                     or module.function that will be used
+                                     to authenticate. This function will
+                                     accept as its only argument the
+                                     `talons.interfaces.auth.Identity` object.
             external_sets_roles: Boolean (defaults to False) of whether the
                                  external authentication function will set the
                                  roles attribute of the Identity object.
@@ -64,14 +65,17 @@ class Authenticator(interfaces.Authenticates):
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
 
-        # Try import'ing the auth function to ensure that it exists
-        try:
-            self.authfn = helpers.import_function(authfn)
-        except (TypeError, ImportError):
-            msg = ("external_authn_callable either could not be found "
-                   "or was not callable.")
-            LOG.error(msg)
-            raise exc.BadConfiguration(msg)
+        if not callable(authfn):
+            # Try import'ing the auth function to ensure that it exists
+            try:
+                self.authfn = helpers.import_function(authfn)
+            except (TypeError, ImportError):
+                msg = ("external_authn_callable either could not be found "
+                       "or was not callable.")
+                LOG.error(msg)
+                raise exc.BadConfiguration(msg)
+        else:
+            self.authfn = authfn
 
         # Ensure that the auth function signature is what we expect
         spec = inspect.getargspec(self.authfn)
@@ -121,13 +125,14 @@ class Authorizer(interfaces.Authorizes):
 
         :param **conf:
 
-            external_authz_callable: Dotted-notation module.class.method
-                              or module.function that will be used
-                              to authorize. This function will
-                              accept as its only two arguments a
-                              `talons.interfaces.auth.Identity` object
-                              and a `talons.interfaces.auth.RequestAction`
-                              object.
+            external_authz_callable: An actual callable or a string in
+                                     dotted-notation module.function that will
+                                     be used to authorize. This function will
+                                     accept as its only two arguments a
+                                     `talons.interfaces.auth.Identity` object
+                                     and a
+                                     `talons.interfaces.auth.RequestAction`
+                                     object.
 
         :raises `talons.exc.BadConfiguration` if configuration options
                 are not valid or conflict with each other.
@@ -139,14 +144,17 @@ class Authorizer(interfaces.Authorizes):
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
 
-        # Try import'ing the auth function to ensure that it exists
-        try:
-            self.authfn = helpers.import_function(authfn)
-        except (TypeError, ImportError):
-            msg = ("external_authz_callable either could not be found "
-                   "or was not callable.")
-            LOG.error(msg)
-            raise exc.BadConfiguration(msg)
+        if not callable(authfn):
+            # Try import'ing the auth function to ensure that it exists
+            try:
+                self.authfn = helpers.import_function(authfn)
+            except (TypeError, ImportError):
+                msg = ("external_authz_callable either could not be found "
+                       "or was not callable.")
+                LOG.error(msg)
+                raise exc.BadConfiguration(msg)
+        else:
+            self.authfn = authfn
 
         # Ensure that the auth function signature is what we expect
         spec = inspect.getargspec(self.authfn)

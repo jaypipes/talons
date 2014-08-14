@@ -53,6 +53,15 @@ class TestExternal(base.TestCase):
                 conf = dict(external_authfn='authme')
                 external.Authenticator(**conf)
 
+    def test_authfn_as_callable(self):
+        def authme(two, args):
+            pass
+        with mock.patch('talons.helpers.import_function') as mocked:
+            with testtools.ExpectedException(exc.BadConfiguration):
+                conf = dict(external_authfn=authme)
+                external.Authenticator(**conf)
+                self.assertFalse(mocked.called)
+
     def test_authfn_called(self):
         def authme(identity):
             return identity
