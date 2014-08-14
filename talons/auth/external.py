@@ -59,7 +59,7 @@ class Authenticator(interfaces.Authenticates):
         )  # Backwards-compat
 
         if not authfn:
-            msg = ("Missing required external_authfn "
+            msg = ("Missing required external_authn_callable "
                    "configuration option.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
@@ -68,7 +68,7 @@ class Authenticator(interfaces.Authenticates):
         try:
             self.authfn = helpers.import_function(authfn)
         except (TypeError, ImportError):
-            msg = ("external_authfn either could not be found "
+            msg = ("external_authn_callable either could not be found "
                    "or was not callable.")
             LOG.error(msg)
             raise exc.BadConfiguration(msg)
@@ -76,7 +76,7 @@ class Authenticator(interfaces.Authenticates):
         # Ensure that the auth function signature is what we expect
         spec = inspect.getargspec(self.authfn)
         if len(spec[0]) != 1:
-            msg = ("external_authfn has an invalid function "
+            msg = ("external_authn_callable has an invalid function "
                    "signature. The function must take only a single "
                    "parameter.")
             LOG.error(msg)
