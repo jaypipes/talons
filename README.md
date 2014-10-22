@@ -343,7 +343,7 @@ channel. Interested in improving and enhancing Talons? Pull requests are always 
 
 ## License and Copyright
 
-Copyright 2013, Jay Pipes
+Copyright 2013-2014, Jay Pipes
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at

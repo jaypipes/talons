@@ -21,9 +21,10 @@ from talons.auth import basicauth
 from tests import base
 
 
+@mock.patch('talons.auth.interfaces.Identity')
 class TestBasicAuth(base.TestCase):
 
-    def test_identity_already_exists(self):
+    def test_identity_already_exists(self, i_mock):
         req = mock.MagicMock()
         req.env = mock.MagicMock()
         req.env.get = mock.MagicMock()
@@ -31,92 +32,68 @@ class TestBasicAuth(base.TestCase):
 
         i = basicauth.Identifier()
         i.identify(req)
-        req.env.get.assert_called_once_with('wsgi.identity')
+        req.env.get.assert_called_once_with(i.IDENTITY_ENV_KEY)
 
-    def test_bad_authenticate(self):
+    def test_bad_authenticate(self, i_mock):
         req = mock.MagicMock()
         a_prop = mock.PropertyMock(return_value="xxxx")
         type(req).auth = a_prop
-        e_prop = mock.PropertyMock(return_value=dict())
-        type(req).env = e_prop
+        req.env = mock.MagicMock()
+        req.env.get = mock.MagicMock(return_value=None)
 
         i = basicauth.Identifier()
-        i.identify(req)
-        e_prop.assert_called_once_with()
+        self.assertFalse(i.identify(req))
         a_prop.assert_called_once_with()
+        self.assertFalse(i_mock.called)
 
-    def test_non_basic_auth(self):
+    def test_non_basic_auth(self, i_mock):
         req = mock.MagicMock()
         a_prop = mock.PropertyMock(return_value="notbasic xxx")
         type(req).auth = a_prop
-        e_prop = mock.PropertyMock(return_value=dict())
-        type(req).env = e_prop
+        req.env = mock.MagicMock()
+        req.env.get = mock.MagicMock(return_value=None)
 
         i = basicauth.Identifier()
-        i.identify(req)
-        e_prop.assert_called_once_with()
+        self.assertFalse(i.identify(req))
         a_prop.assert_called_once_with()
+        self.assertFalse(i_mock.called)
 
-    def test_httpauth_none(self):
+    def test_httpauth_none(self, i_mock):
         # Issue #29 showed incorrect behaviour when
         # falcon.request.Request.auth was None instead of the expected
         # auth_type, user_and_key tuple. Ensure we handle None.
-        req_mock = mock.MagicMock()
+        req = mock.MagicMock()
         a_prop = mock.PropertyMock(return_value=None)
-        type(req_mock).auth = a_prop
-        env_mock = mock.MagicMock()
-        env_mock.get.return_value = None
-        req_mock.env = env_mock
+        type(req).auth = a_prop
+        req.env = mock.MagicMock()
+        req.env.get = mock.MagicMock(return_value=None)
 
-        mod_cls = 'talons.auth.interfaces.Identity'
-        with mock.patch(mod_cls) as i_mock:
-            i = basicauth.Identifier()
-            self.assertFalse(i.identify(req_mock))
+        i = basicauth.Identifier()
+        self.assertFalse(i.identify(req))
         a_prop.assert_called_once_with()
         self.assertFalse(i_mock.called)
-        env_mock.get.assert_called_once_with(i.IDENTITY_ENV_KEY)
 
-    def test_basic_invalid(self):
+    def test_basic_invalid(self, i_mock):
         req = mock.MagicMock()
         a_prop = mock.PropertyMock(return_value="basic xxx")
         type(req).auth = a_prop
-        e_prop = mock.PropertyMock(return_value=dict())
-        type(req).env = e_prop
+        req.env = mock.MagicMock()
+        req.env.get = mock.MagicMock(return_value=None)
 
-        mod_cls = 'talons.auth.interfaces.Identity'
-        with mock.patch(mod_cls) as i_mock:
-            i = basicauth.Identifier()
-            i.identify(req)
-            e_prop.assert_called_once_with()
-            a_prop.assert_called_once_with()
-            i_mock.assert_not_called()
+        i = basicauth.Identifier()
+        self.assertFalse(i.identify(req))
+        a_prop.assert_called_once_with()
+        self.assertFalse(i_mock.called)
 
-    def test_basic_valid(self):
+    def test_basic_valid(self, i_mock):
         req = mock.MagicMock()
         # Aladdin with key 'open sesame'
         valid_auth = "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
         a_prop = mock.PropertyMock(return_value=valid_auth)
         type(req).auth = a_prop
-        e_prop = mock.PropertyMock(return_value=dict())
-        type(req).env = e_prop
+        req.env = mock.MagicMock()
+        req.env.get = mock.MagicMock(return_value=None)
 
-        mod_cls = 'talons.auth.interfaces.Identity'
-        with mock.patch(mod_cls) as i_mock:
-            i = basicauth.Identifier()
-            i.identify(req)
-            i_mock.assert_called_once_with(u'Aladdin', key=u'open sesame')
-
-    def test_basic_bytes(self):
-        req = mock.MagicMock()
-        # Aladdin with key 'open sesame'
-        valid_auth = "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
-        a_prop = mock.PropertyMock(return_value=valid_auth)
-        type(req).auth = a_prop
-        e_prop = mock.PropertyMock(return_value=dict())
-        type(req).env = e_prop
-
-        mod_cls = 'talons.auth.interfaces.Identity'
-        with mock.patch(mod_cls) as i_mock:
-            i = basicauth.Identifier()
-            i.identify(req)
-            i_mock.assert_called_once_with(u'Aladdin', key=u'open sesame')
+        i = basicauth.Identifier()
+        self.assertTrue(i.identify(req))
+        i_mock.assert_called_once_with(u'Aladdin', key=u'open sesame')
