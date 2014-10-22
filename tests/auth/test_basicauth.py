@@ -57,6 +57,25 @@ class TestBasicAuth(base.TestCase):
         e_prop.assert_called_once_with()
         a_prop.assert_called_once_with()
 
+    def test_httpauth_none(self):
+        # Issue #29 showed incorrect behaviour when
+        # falcon.request.Request.auth was None instead of the expected
+        # auth_type, user_and_key tuple. Ensure we handle None.
+        req_mock = mock.MagicMock()
+        a_prop = mock.PropertyMock(return_value=None)
+        type(req_mock).auth = a_prop
+        env_mock = mock.MagicMock()
+        env_mock.get.return_value = None
+        req_mock.env = env_mock
+
+        mod_cls = 'talons.auth.interfaces.Identity'
+        with mock.patch(mod_cls) as i_mock:
+            i = basicauth.Identifier()
+            self.assertFalse(i.identify(req_mock))
+        a_prop.assert_called_once_with()
+        self.assertFalse(i_mock.called)
+        env_mock.get.assert_called_once_with(i.IDENTITY_ENV_KEY)
+
     def test_basic_invalid(self):
         req = mock.MagicMock()
         a_prop = mock.PropertyMock(return_value="basic xxx")

@@ -43,6 +43,8 @@ class Identifier(interfaces.Identifies):
             return True
 
         http_auth = request.auth
+        if http_auth is None:
+            return False
 
         if isinstance(http_auth, six.string_types):
             http_auth = http_auth.encode('ascii')
